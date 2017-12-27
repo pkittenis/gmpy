@@ -1,27 +1,15 @@
 import sys
 import os
+import platform
 
-if sys.version.find('MSC') == -1:
-    windows = False
-else:
-    windows = True
-
-# <rant>
-# Setuptools is broken on Linux. The command "python setup.py install" no
-# longer works. Only use setuptools on Windows to keep Appveyor happy.
-# </rant>
-
-if windows:
-    try:
-        from setuptools import setup, Extension
-    except ImportError:
-        from distutils.core import setup, Extension
-else:
-    from distutils.core import setup, Extension
-
+from setuptools import setup, find_packages, Extension
+from setuptools.command.build_ext import build_ext
 from distutils.command.clean import clean
-from distutils.command.build_ext import build_ext
-from distutils.command.install_data import install_data
+
+if platform.system() == 'Windows':
+    windows = True
+else:
+    windows = False
 
 def writeln(s):
     sys.stdout.write('%s\n' % s)
@@ -276,23 +264,13 @@ class gmpy_build_ext(build_ext):
         build_ext.finalize_options(self)
         gmpy_build_ext.doit(self)
 
-# custom install data in order that data_files
-# get installed together with the .so
-
-class gmpy_install_data(install_data):
-    def finalize_options(self):
-        install_data.finalize_options(self)
-        install = self.distribution.get_command_obj('install')
-        self.install_dir = install.install_purelib
-
 # prepare the extension for building
-
 my_commands = {'clean' : gmpy_clean, 'build_ext' : gmpy_build_ext, 'install_data' : gmpy_install_data}
 
 gmpy2_ext = Extension('gmpy2',
                       sources=[os.path.join('src', 'gmpy2.c')],
                       include_dirs=['./src'],
-                      define_macros = defines)
+                      define_macros=defines)
 
 setup(name = "gmpy2",
       version = "2.1.0a1",
@@ -323,7 +301,7 @@ setup(name = "gmpy2",
         'Topic :: Scientific/Engineering :: Mathematics',
         'Topic :: Software Development :: Libraries :: Python Modules',
       ],
-      keywords = "gmp mpir mpfr mpc multiple-precision arbitrary-precision precision bignum",
-      cmdclass = my_commands,
-      ext_modules = [gmpy2_ext]
+      keywords="gmp mpir mpfr mpc multiple-precision arbitrary-precision precision bignum",
+      cmdclass=my_commands,
+      ext_modules=[gmpy2_ext],
 )
