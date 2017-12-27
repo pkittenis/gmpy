@@ -5,6 +5,7 @@ import platform
 from setuptools import setup, find_packages, Extension
 from setuptools.command.build_ext import build_ext
 from distutils.command.clean import clean
+from distutils.command.install_data import install_data
 
 if platform.system() == 'Windows':
     windows = True
@@ -263,6 +264,14 @@ class gmpy_build_ext(build_ext):
     def finalize_options(self):
         build_ext.finalize_options(self)
         gmpy_build_ext.doit(self)
+
+
+class gmpy_install_data(install_data):
+    def finalize_options(self):
+        install_data.finalize_options(self)
+        install = self.distribution.get_command_obj('install')
+        self.install_dir = install.install_purelib
+
 
 # prepare the extension for building
 my_commands = {'clean' : gmpy_clean, 'build_ext' : gmpy_build_ext, 'install_data' : gmpy_install_data}
